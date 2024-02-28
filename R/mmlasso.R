@@ -29,9 +29,9 @@ mmlasso<-function(x,y,varsigma=1,cualcv.mm=5,cualcv.S=5,numlam.mm=30,numlam.S=30
   ###
   
   ###Set-up cluster for parallel computations
-  cores<-min(detectCores(),ncores)
-  try(cl<-makeCluster(cores))
-  try(registerDoParallel(cl))
+  # cores<-min(detectCores(),ncores)
+  # try(cl<-makeCluster(cores))
+  # try(registerDoParallel(cl))
   ###
   
   ###Calculate initial estimate and scale
@@ -54,10 +54,10 @@ mmlasso<-function(x,y,varsigma=1,cualcv.mm=5,cualcv.S=5,numlam.mm=30,numlam.S=30
   ###Calculate candidate lambdas for MMLasso
   lambdamax0<-lambda0(xnor,ynor) #Initial candidate
   lambdamax1<-try(optim.lam(xnor,ynor,beta.SE,scale.SE,lambdamax0,c1,niter.mm))#Improvement
-  if(class(lambdamax1)=='try-error'){
-    lambdamax1<-lambdamax0
-    warning('Using approximate lambdamax for MM-Lasso')
-  }
+  # if(class(lambdamax1)=='try-error'){
+  #   lambdamax1<-lambdamax0
+  #   warning('Using approximate lambdamax for MM-Lasso')
+  # }
   lambdas<-seq(0,lambdamax1,length.out=numlam.mm)
   if(p>=n){
     lambdas<-lambdas[2:numlam.mm]
@@ -75,7 +75,7 @@ mmlasso<-function(x,y,varsigma=1,cualcv.mm=5,cualcv.S=5,numlam.mm=30,numlam.S=30
   ###Parallel CV
   exp.mm<-c('MMLasso','CVLasso')
   klam<-NULL
-  mse<-foreach(klam=1:length(lambdas),.combine=c,.packages=c('mmlasso','robustHD'),.export=exp.mm)%dopar%{
+  mse<-foreach(klam=1:length(lambdas),.combine=c,.packages=c('mmlasso','robustHD'),.export=exp.mm)%do%{
     CVLasso(xnord,ynord,beta.SE,scale.SE,nfold=cualcv.mm,lambdas[klam],c1,niter.mm)
   }
   if(any(is.infinite(mse))){
@@ -88,11 +88,12 @@ mmlasso<-function(x,y,varsigma=1,cualcv.mm=5,cualcv.S=5,numlam.mm=30,numlam.S=30
   
   #Calculated final MMLasso estimate
   fit.MMLasso<-try(MMLasso(xnor,ynor,beta.SE,scale.SE,lamin,c1,niter.mm))
-  if(class(fit.MMLasso)=='try-error'){
-    beta.MMLasso.slo<-beta.SE[2:length(beta.SE)]
-    beta.MMLasso.int<-beta.SE[1]
-    warning('Calculation of the final MM-Lasso estimate failed, returning S-Ridge instead')
-  }else{
+  # if(class(fit.MMLasso)=='try-error'){
+  #   beta.MMLasso.slo<-beta.SE[2:length(beta.SE)]
+  #   beta.MMLasso.int<-beta.SE[1]
+  #   warning('Calculation of the final MM-Lasso estimate failed, returning S-Ridge instead')
+  # }else
+    {
   beta.MMLasso<-fit.MMLasso$coef
   beta.MMLasso.slo<-beta.MMLasso[2:length(beta.MMLasso)]
   beta.MMLasso.int<-beta.MMLasso[1]}
@@ -121,10 +122,10 @@ mmlasso<-function(x,y,varsigma=1,cualcv.mm=5,cualcv.S=5,numlam.mm=30,numlam.S=30
   ###Calculate candidate lambdas for adaptive MMLasso   
   lambdamax0.ad<-lambda0(xnor.w,ynor)
   lambdamax1.ad<-try(optim.lam(xnor.w,ynor,beta.SE.w,scale.SE,lambdamax0.ad,c1,niter.mm))
-  if (class(lambdamax1.ad)=='try-error'){
-    lambdamax1.ad<-lambdamax0.ad
-    warning('Using approximate lambdamax for adaptive MM-Lasso')
-  }
+  # if (class(lambdamax1.ad)=='try-error'){
+  #   lambdamax1.ad<-lambdamax0.ad
+  #   warning('Using approximate lambdamax for adaptive MM-Lasso')
+  # }
   lambdas.ad<-seq(0,lambdamax1.ad,length.out=numlam.mm)
     if (p>=n){
       lambdas.ad<-lambdas.ad[2:numlam.mm]
@@ -132,7 +133,7 @@ mmlasso<-function(x,y,varsigma=1,cualcv.mm=5,cualcv.S=5,numlam.mm=30,numlam.S=30
   ##
   
   ###Parallel CV for the adaptive MMLasso
-  mse.ad<-foreach(klam=1:length(lambdas.ad),.combine=c,.packages=c('mmlasso','robustHD'),.export=exp.mm)%dopar%{
+  mse.ad<-foreach(klam=1:length(lambdas.ad),.combine=c,.packages=c('mmlasso','robustHD'),.export=exp.mm)%do%{
     CVLasso(xnord.w,ynord,beta.SE.w,scale.SE,nfold=cualcv.mm,lambdas.ad[klam],c1,niter.mm)
   }
   if(any(is.infinite(mse.ad))){
@@ -143,16 +144,17 @@ mmlasso<-function(x,y,varsigma=1,cualcv.mm=5,cualcv.S=5,numlam.mm=30,numlam.S=30
   lamin.ad<-lambdas.ad[indmin.ad]
   ###
   
-  try(stopCluster(cl))
+  # try(stopCluster(cl))
   
   ###Calculate final estimates and return to original coordinates
   
   fit.MMLasso.ad<-try(MMLasso(xnor.w,ynor,beta.SE.w,scale.SE,lamin.ad,c1,niter.mm)$coef)
-  if(class(fit.MMLasso.ad)=='try-error'){
-    beta.MMLasso.slo.ad<-beta.MMLasso.slo
-    beta.MMLasso.int.ad<-beta.MMLasso.int
-    warning('Calculation of the final adaptive MM-Lasso estimate failed, returning MM-Lasso instead')
-  } else{
+  # if(class(fit.MMLasso.ad)=='try-error'){
+  #   beta.MMLasso.slo.ad<-beta.MMLasso.slo
+  #   beta.MMLasso.int.ad<-beta.MMLasso.int
+  #   warning('Calculation of the final adaptive MM-Lasso estimate failed, returning MM-Lasso instead')
+  # } else
+    {
     beta.MMLasso.slo.ad <- rep(0,p)
     beta.MMLasso.slo.ad[activ] <- fit.MMLasso.ad[2:length(fit.MMLasso.ad)]*w.ad
     beta.MMLasso.int.ad <- fit.MMLasso.ad[1]
@@ -211,9 +213,9 @@ CVLasso<-function(X,y,beta.ini,scale.ini,nfold,lam,c1,niter.mm){
     ytest<-y[testk]
     yesti<-y[estik]
     fit.MMBR<-try(MMLasso(Xesti,yesti,beta.ini,scale.ini,lambda=lamcv,c1=c1,niter.mm))
-    if (class(fit.MMBR)=="try-error"){
-      return(Inf)
-    }
+    # if (class(fit.MMBR)=="try-error"){
+    #   return(Inf)
+    # }
     beta.MMBR<-fit.MMBR$coef
     beta.MMBR.slo<-beta.MMBR[2:length(beta.MMBR)]
     beta.MMBR.int<-beta.MMBR[1]
@@ -259,10 +261,10 @@ MMLasso<-function(xx,y,beta.ini,scale.ini,lambda,c1,niter.mm){
       return(list(coef=beta.o))
     }
     try(res.Lasso <- robustHD:::fastLasso(xort, yast,lambda,intercept=FALSE, normalize=FALSE, use.Gram=u.Gram),silent=TRUE)
-    if (class(res.Lasso)=="try-error"){
-      warning("fastLasso failed")
-      return(list(coef=beta.o))
-    }
+    # if (class(res.Lasso)=="try-error"){
+    #   warning("fastLasso failed")
+    #   return(list(coef=beta.o))
+    # }
     beta.Lasso <- coef(res.Lasso)
     MMcpp2<-MMLassoCpp2(xjota,yast,beta.Lasso,beta.o,alpha)
     beta.n<-MMcpp2$beta.n

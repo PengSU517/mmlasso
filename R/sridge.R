@@ -54,18 +54,18 @@ Xnord<-Xnor[orden,]
 ynord<-ynor[orden]
 ###
 
-if (alone==1){
-  ###Set-up cluster for parallel computations
-  cores<-min(detectCores(),ncores)
-  try(cl<-makeCluster(cores))
-  try(registerDoParallel(cl))
-  ###
-}
+# if (alone==1){
+#   ###Set-up cluster for parallel computations
+#   cores<-min(detectCores(),ncores)
+#   try(cl<-makeCluster(cores))
+#   try(registerDoParallel(cl))
+#   ###
+# }
 
 ###Parallel CV
 exp.se<-c('CVSE')
 klam<-NULL
-mse<-foreach(klam=1:length(lamdas),.combine=c,.packages=c('mmlasso'),.export=exp.se)%dopar%{
+mse<-foreach(klam=1:length(lamdas),.combine=c,.packages=c('mmlasso'),.export=exp.se)%do%{
       CVSE(Xnord,ynord,nfold=cualcv.S,lamdas[klam],pp[klam],nkeep,niter.S)
   }
 
@@ -78,9 +78,9 @@ lamin<-lamdas[indmin]
 delmin<-deltas[indmin]
 ###
 
-if(alone==1){
-  stopCluster(cl)
-}
+# if(alone==1){
+#   stopCluster(cl)
+# }
 
 fin<-rr_se(Xnor,ynor,lamin,deltaesc=delmin,cc_scale=1,nkeep,niter.S,epsilon=1e-4)
 beta<-fin$coef
